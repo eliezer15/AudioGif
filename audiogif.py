@@ -1,7 +1,6 @@
 from dotenv import load_dotenv
 import logging
 from os import environ as env
-from typing import Dict
 from telegram.ext import Updater, CallbackContext, MessageHandler, Filters, InlineQueryHandler
 from telegram import Update, InlineQueryResultArticle, InlineQueryResultCachedVideo
 
@@ -16,7 +15,7 @@ BOT_ID= env.get('BOT_ID')
 TOKEN = env.get('TOKEN')
 MANAGEMENT_CHANNEL_ID = env.get('MANAGEMENT_CHANNEL_ID')
 
-video_repo = VideoRepository(env.get('VIDEOS_FILE'))
+video_repo = VideoRepository(env.get('VIDEOS_FILE'), env.get('FAVORITES_FILE'))
 
 def main():
     
@@ -25,12 +24,12 @@ def main():
 
     dispatcher.add_handler(InlineQueryHandler(on_mention))
     dispatcher.add_handler(MessageHandler(Filters.video, on_video_upload))
+    dispatcher.add_handler(MessageHandler(Filters.reply, on_message_reply))
 
     updater.start_polling()
 
 def on_video_upload(update: Update, context: CallbackContext):
     print(update)
-
     if not is_management_channel(update):
         return
 
@@ -38,15 +37,31 @@ def on_video_upload(update: Update, context: CallbackContext):
         return
    
     video_id = update.message.video.file_id
-    caption = '' if not  update.message.caption else update.message.caption.lower() 
+    caption = '' if update.message.caption is None else update.message.caption.lower() 
 
     output_message = video_repo.save_video(caption, video_id)
 
-    context.bot.send_message(chat_id=update.effective_chat.id, text=output_message)
+    update.message.reply_text(output_message)
+    #context.bot.send_message(chat_id=update.effective_chat.id, text=output_message)
+
+def on_message_reply(update: Update, context: CallbackContext):
+
+    if update.message.reply_to_message.video is None:
+        print('Ignoring, not video')
+        return
+
+    reply_text = update.message.text.strip().lower()
+    if reply_text not in ['favorite', 'favorito', 'f', '❤️', '⭐']:
+        return
+
+    video_id = update.message.reply_to_message.video.file_id
+    output_message = video_repo.favorite(video_id, str(update.message.from_user.id))
+    update.message.reply_text(output_message)
 
 def on_mention(update: Update, context: CallbackContext):
         query = update.inline_query.query
-        captions = video_repo.search_video_captions(query)
+        user_id = update.inline_query.from_user.id
+        captions = video_repo.search_video_captions(query, str(user_id))
 
         results = []
         for caption in captions:
@@ -64,7 +79,6 @@ def build_inline_query(video_caption: str, video_id: str) -> InlineQueryResultAr
     )
 
 def is_management_channel(update: Update) -> bool:
-    print(update.message.chat_id)
     return str(update.message.chat_id) == MANAGEMENT_CHANNEL_ID
 
 if __name__ == '__main__':

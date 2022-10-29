@@ -1,5 +1,6 @@
 # Data files
 videos.txt
+favorites.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
