@@ -7,10 +7,13 @@ from telegram import Update, InlineQueryResultArticle, InlineQueryResultCachedVi
 
 load_dotenv()
 
+#TODO: Separate constants from env variables
+
 VIDEOS_FILE = env.get('VIDEOS_FILE')
 BOT_ID= env.get('BOT_ID')
 TOKEN = env.get('TOKEN')
 MANAGEMENT_CHANNEL_ID = env.get('MANAGEMENT_CHANNEL_ID')
+TELEGRAM_MAX_QUERY_RESULTS = 50
 
 def main():
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -59,12 +62,12 @@ def on_mention(update: Update, context: CallbackContext):
     with open(VIDEOS_FILE) as data_file:
         captions_to_video_ids = build_dict_from_file(data_file)
         query = update.inline_query.query
-        commands = filter_commands(query, captions_to_video_ids.keys())
+        captions = search_video_captions(query, list(captions_to_video_ids.keys()))
 
         results = []
-        for command in commands:
+        for caption in captions:
             results.append(
-                build_inline_query(command, captions_to_video_ids)
+                build_inline_query(caption, captions_to_video_ids)
             )
 
         context.bot.answer_inline_query(update.inline_query.id, results)
@@ -79,19 +82,20 @@ def build_dict_from_file(data_file) -> Dict:
     
     return dict
 
-def build_inline_query(command: str, captions_to_video_ids: Dict) -> InlineQueryResultArticle:
+def build_inline_query(video_caption: str, captions_to_video_ids: Dict) -> InlineQueryResultArticle:
     print(captions_to_video_ids)
     return InlineQueryResultCachedVideo(
-        id=command,
-        title=command,
-        video_file_id=captions_to_video_ids[command]
+        id=video_caption,
+        title=video_caption,
+        video_file_id=captions_to_video_ids[video_caption]
     )
 
-def filter_commands(query: str, video_captions: List) -> List:
+def search_video_captions(query: str, video_captions: List) -> List:
+    results = video_captions
     if len(query) > 2:
-        return list(filter(lambda prompt: query in prompt, video_captions))
-    else:
-        return video_captions
+        results = list(filter(lambda prompt: query in prompt, video_captions))
+
+    return results[0:TELEGRAM_MAX_QUERY_RESULTS - 1]
 
 def is_management_channel(update: Update) -> bool:
     print(update.message.chat_id)
