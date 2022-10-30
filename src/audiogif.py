@@ -51,9 +51,7 @@ def on_message_reply(update: Update, context: CallbackContext):
     update.message.reply_text(output_message)
 
 def on_mention(update: Update, context: CallbackContext):
-        print('does on mention get called?')
         query = update.inline_query.query
-        print(query)
         videos = video_repo.search_videos(query, update.inline_query.from_user)
 
         results = []

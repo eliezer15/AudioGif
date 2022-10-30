@@ -18,8 +18,6 @@ class VideoRepository:
         self.video_search = VideoSearch(search_filename)
 
     def search_videos(self, query: str, telegram_user: TelegramUser) -> List[Video]:
-        print(query)
-        print('Does search videos get called?')
         if len(query) == 0:
             return self.__get_default_videos_for_user(telegram_user)
         else:
@@ -95,9 +93,7 @@ class VideoRepository:
         return results
     
     def __get_videos_by_search_query(self, query: str):
-        print('does get_videos get called?')
         video_ids = self.video_search.find_video_ids(query)
-        print(video_ids)
 
         ''' 
         TODO: figure out how to make the "in" operator work to query the videos directly. For now, just getting all one by one
