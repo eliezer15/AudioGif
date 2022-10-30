@@ -5,13 +5,13 @@ from dotenv import load_dotenv
 from os import environ as env
 
 load_dotenv()
-TOKEN = env.get('TOKEN')
+TOKEN = env['TOKEN']
 
 bot = telegram.Bot(TOKEN)
 
 with open('new_videos.txt', 'r+') as new_videos:
-    with open(env.get('VIDEOS_UNIQUE_IDS_FILE'), 'r+') as unique_ids:
-        with open(env.get('VIDEOS_FILE'), 'r') as read_file:
+    with open(env['VIDEOS_UNIQUE_IDS_FILE'], 'r+') as unique_ids:
+        with open(env['VIDEOS_FILE'], 'r') as read_file:
             for line in read_file:
                 values = line.split('=')
                 if (len(values) < 2):

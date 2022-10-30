@@ -9,20 +9,18 @@ from video_repository import VideoRepository
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 load_dotenv()
 
-#TODO: Separate constants from env variables
+BOT_ID= env['BOT_ID']
+TOKEN = env['TOKEN']
+MANAGEMENT_CHANNEL_ID = env['MANAGEMENT_CHANNEL_ID']
 
-BOT_ID= env.get('BOT_ID')
-TOKEN = env.get('TOKEN')
-MANAGEMENT_CHANNEL_ID = env.get('MANAGEMENT_CHANNEL_ID')
-
-video_repo = VideoRepository(env.get('VIDEOS_FILE'), env.get('FAVORITES_FILE'))
+video_repo = VideoRepository(env['DB_FILE'])
 
 def main():
     
     updater = Updater(token=TOKEN)
     dispatcher = updater.dispatcher
 
-    dispatcher.add_handler(InlineQueryHandler(on_mention))
+    #dispatcher.add_handler(InlineQueryHandler(on_mention))
     dispatcher.add_handler(MessageHandler(Filters.video, on_video_upload))
     dispatcher.add_handler(MessageHandler(Filters.reply, on_message_reply))
 
@@ -36,16 +34,12 @@ def on_video_upload(update: Update, context: CallbackContext):
     if update.message.via_bot and update.message.via_bot.is_bot:
         return
    
-    video_id = update.message.video.file_id
     caption = '' if update.message.caption is None else update.message.caption.lower() 
-
-    output_message = video_repo.save_video(caption, video_id)
+    output_message = video_repo.save_video(caption, update.message.video, update.message.from_user)
 
     update.message.reply_text(output_message)
-    #context.bot.send_message(chat_id=update.effective_chat.id, text=output_message)
 
 def on_message_reply(update: Update, context: CallbackContext):
-
     if update.message.reply_to_message.video is None:
         print('Ignoring, not video')
         return
@@ -54,8 +48,7 @@ def on_message_reply(update: Update, context: CallbackContext):
     if reply_text not in ['favorite', 'favorito', 'f', '❤️', '⭐']:
         return
 
-    video_id = update.message.reply_to_message.video.file_id
-    output_message = video_repo.favorite(video_id, str(update.message.from_user.id))
+    output_message = video_repo.favorite(update.message.reply_to_message.video, update.message.from_user)
     update.message.reply_text(output_message)
 
 def on_mention(update: Update, context: CallbackContext):
