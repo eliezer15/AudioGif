@@ -4,8 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from telegram import Video as TelegramVideo, User as TelegramUser
 from typing import  List
 from video_search import VideoSearch
-
-
+from string import punctuation
 class VideoRepository:
     
     MAX_VIDEOS_SEARCH_RESULT = 50
@@ -39,6 +38,8 @@ class VideoRepository:
         )
         self.session.add(video_model)
         self.session.commit()
+
+        self.__add_video_to_search_index(video_model)
 
         return 'Video guardado exitosamente.'
 
@@ -105,3 +106,21 @@ class VideoRepository:
             result.append(self.session.query(Video).get(id))
         
         return result
+    
+    def __add_video_to_search_index(self, video: Video):
+        search_terms = self.__get_search_terms_from_title(video.title)
+        self.video_search.add_search_terms(video.video_id, search_terms)
+
+    def __get_search_terms_from_title(self, title: str) -> List[str]:
+        #1 Strip punctuation from it
+        table = str.maketrans(dict.fromkeys(punctuation))
+        stripped_title = title.translate(table)
+
+        #2 Split by space
+        terms = stripped_title.split() #Split with no arguments splits by whitespace
+
+        #3 Remove one letter words
+        filtered_terms = filter(lambda term: len(term) > 1, terms)
+
+        # Finally, remove duplicates
+        return list(set(filtered_terms))
