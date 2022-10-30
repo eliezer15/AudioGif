@@ -14,6 +14,10 @@ class VideoRepository:
         Session = sessionmaker(bind=engine)
         self.session = Session()
 
+    def search_videos(self, query: str, telegram_user: TelegramUser) -> List[Video]:
+        #if len(query) < 2:
+        return self.__get_default_videos_for_user(telegram_user)
+
     def save_video(self, caption: str, telegram_video: TelegramVideo, telegram_user: TelegramUser):
         if caption == '':
             return 'El video no incluye ningun caption, no sera guardado.'
@@ -21,7 +25,7 @@ class VideoRepository:
         elif len(caption) > 32:
             return 'El caption tiene mas de 32 caracteres. Sube el video con un caption mas corto.'
 
-        self.save_user_if_not_exist(telegram_user)
+        self.__save_user_if_not_exist(telegram_user)
 
         video_model = Video(
             video_id = telegram_video.file_unique_id,
@@ -33,19 +37,12 @@ class VideoRepository:
 
         return 'Video guardado exitosamente.'
 
-    def save_user_if_not_exist(self, user: TelegramUser):
-        if self.session.query(User).get(user.id) is None:
-            print(f'User {user.username} not found, saving to DB.')
-            user_model = User(user_id=user.id, username=user.username)
-            self.session.add(user_model)
-            self.session.commit()
-
-    def favorite(self, telegram_video: TelegramVideo, telegram_user: TelegramUser) -> str:
+    def save_favorite(self, telegram_video: TelegramVideo, telegram_user: TelegramUser) -> str:
         existing_video = self.session.query(Video).get(telegram_video.file_unique_id)
         if existing_video is None:
             return 'Este video no es parte de AudioGif.'
         
-        self.save_user_if_not_exist(telegram_user)
+        self.__save_user_if_not_exist(telegram_user)
 
         existing_favorites = self.session.query(Favorite).filter_by(user_id=telegram_user.id).count()
 
@@ -57,3 +54,24 @@ class VideoRepository:
         self.session.commit()
 
         return 'Favorito guardado exitosamente.'
+
+    def __save_user_if_not_exist(self, user: TelegramUser):
+        if self.session.query(User).get(user.id) is None:
+            print(f'User {user.username} not found, saving to DB.')
+            user_model = User(user_id=user.id, username=user.username)
+            self.session.add(user_model)
+            self.session.commit()
+
+    def __get_default_videos_for_user(self, user: TelegramUser):
+        results = []
+
+        favorites = self.session.query(Video).join(Favorite).filter_by(user_id=user.id).all()
+        for video in favorites:
+            video.title = f'⭐ {video.title}'
+            results.append(video)
+
+        videos_left = self.MAX_VIDEOS_SEARCH_RESULT - len(results)
+        other_videos = self.session.query(Video).limit(videos_left).all()
+
+        results.extend(other_videos)
+        return results
