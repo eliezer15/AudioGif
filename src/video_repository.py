@@ -3,22 +3,29 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from telegram import Video as TelegramVideo, User as TelegramUser
 from typing import  List
+from video_search import VideoSearch
 
 
 class VideoRepository:
     
     MAX_VIDEOS_SEARCH_RESULT = 50
 
-    def __init__(self, db_filename: str):
+    def __init__(self, db_filename: str, search_filename: str):
         engine = create_engine(f'sqlite:///{db_filename}', echo=True)
         Session = sessionmaker(bind=engine)
         self.session = Session()
 
-    def search_videos(self, query: str, telegram_user: TelegramUser) -> List[Video]:
-        #if len(query) < 2:
-        return self.__get_default_videos_for_user(telegram_user)
+        self.video_search = VideoSearch(search_filename)
 
-    def save_video(self, caption: str, telegram_video: TelegramVideo, telegram_user: TelegramUser):
+    def search_videos(self, query: str, telegram_user: TelegramUser) -> List[Video]:
+        print(query)
+        print('Does search videos get called?')
+        if len(query) == 0:
+            return self.__get_default_videos_for_user(telegram_user)
+        else:
+            return self.__get_videos_by_search_query(query)
+
+    def save_video(self, caption: str, telegram_video: TelegramVideo, telegram_user: TelegramUser) -> str:
         if caption == '':
             return 'El video no incluye ningun caption, no sera guardado.'
 
@@ -55,6 +62,17 @@ class VideoRepository:
 
         return 'Favorito guardado exitosamente.'
 
+    def save_search_terms(self, telegram_video: TelegramVideo, search_terms: List[str]) -> str:
+        existing_video = self.session.query(Video).get(telegram_video.file_unique_id)
+        if existing_video is None:
+            return 'Este video no es parte de AudioGif.'
+        
+        self.video_search.add_search_terms(telegram_video.file_unique_id, search_terms)
+        return 'Terminos de busqueda guardados exitosamente.'
+
+    def get_all_videos(self) -> List[Video]:
+        return self.session.query(Video).all()
+
     def __save_user_if_not_exist(self, user: TelegramUser):
         if self.session.query(User).get(user.id) is None:
             print(f'User {user.username} not found, saving to DB.')
@@ -75,3 +93,19 @@ class VideoRepository:
 
         results.extend(other_videos)
         return results
+    
+    def __get_videos_by_search_query(self, query: str):
+        print('does get_videos get called?')
+        video_ids = self.video_search.find_video_ids(query)
+        print(video_ids)
+
+        ''' 
+        TODO: figure out how to make the "in" operator work to query the videos directly. For now, just getting all one by one
+        videos = self.session.query(Video).filter(Video.video_id.in_(video_ids)).all()
+        '''
+        
+        result = []
+        for id in video_ids:
+            result.append(self.session.query(Video).get(id))
+        
+        return result
