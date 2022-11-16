@@ -33,12 +33,15 @@ class Video:
         video.uploaded_by = db_video.uploaded_by
         return video
     
-    def from_telegram_video(telegram_video: TelegramVideo):
+    def from_telegram_video(telegram_video: TelegramVideo, caption: str):
         video = Video()
         video.video_id = telegram_video.file_id
         video.playable_video_id = telegram_video.file_unique_id
-        video.title = telegram_video.title
+        video.title = caption
         return video
+    
+    def __str__(self):
+        return f'Video: {self.title}; {self.video_id}; {self.playable_video_id}; {self.uploaded_by}'
 
 class Favorite:
     def __init__(self, user_id: str, video_id: str):
@@ -54,6 +57,9 @@ class Favorite:
     def from_db_model(db_favorite: db.Favorite):
         favorite = Favorite(db_favorite.user_id, db_favorite.video_id)
         return favorite
+    
+    def __str__(self):
+        return f'Favorite: {self.user_id}; {self.video_id}'
 
 
 class User:
@@ -78,4 +84,7 @@ class User:
         user.user_id = telegram_user.id
         user.username = telegram_user.username
         return user
+    
+    def __str__(self) -> str:
+        return f'User: {self.user_id}; {self.username}'
     

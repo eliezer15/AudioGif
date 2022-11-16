@@ -53,11 +53,11 @@ class VideoService:
         favorites = self.repository.get_favorite_videos(user.user_id)
         for db_video in favorites:
             video = Video.from_db_model(db_video)
-            #video.title = f'⭐ {video.title}'
-            #results.append(video)
+            video.title = f'⭐ {video.title}'
+            results.append(video)
         
         videos_left = self.MAX_VIDEOS_RESULT - len(results)
-        default_videos = self.repository.get_all_videos(1)
+        default_videos = self.repository.get_all_videos(videos_left)
 
         results.extend(default_videos)
         return results
