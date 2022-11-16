@@ -47,15 +47,19 @@ class TelegramService:
 
     def handle_bot_mention(self, update: Update, context: CallbackContext):
         query = update.inline_query.query
+        get_default_videos_for_user = len(query) == 0
         user = User.from_telegram_user(update.inline_query.from_user)
 
-        videos = self.video_service.search_videos(query, user)
+        videos = self.video_service.search_videos(query, user, get_default_videos_for_user)
 
         results = []
         for video in videos:
             results.append(self.__build_inline_query(video))
 
-        context.bot.answer_inline_query(update.inline_query.id, results)
+        context.bot.answer_inline_query(
+            update.inline_query.id, 
+            results,
+            is_personal=get_default_videos_for_user)
 
     def __build_inline_query(self, video: Video) -> InlineQueryResultArticle:
         return InlineQueryResultCachedVideo(

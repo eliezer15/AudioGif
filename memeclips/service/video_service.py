@@ -11,8 +11,8 @@ class VideoService:
         self.repository = repository
         self.search_index = search_index
     
-    def search_videos(self, query: str, user: User) -> List[Video]:
-        if len(query) == 0:
+    def search_videos(self, query: str, user: User, get_default_videos_for_user: bool) -> List[Video]:
+        if get_default_videos_for_user:
             return self.__get_default_videos_for_user(user)
         else:
             return self.__get_videos_by_search_query(query)
