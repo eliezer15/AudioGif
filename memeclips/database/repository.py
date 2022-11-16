@@ -55,14 +55,14 @@ class Repository:
         """
         return self.session.query(Video).limit(limit).all()
 
-    def get_videos_by_ids(self, video_ids: List[str]) -> List[Video]:
+    def get_videos_by_ids(self, video_ids: List[str], limit: int) -> List[Video]:
         """
         Gets all videos from the database by their ids.
 
         :param video_ids: the video ids
         :return: all videos
         """
-        return self.session.query(Video).filter(Video.video_id.in_(video_ids)).all()
+        return self.session.query(Video).filter(Video.video_id.in_(video_ids)).limit(limit).all()
     
     def get_video_by_id(self, video_id: str) -> Video:
         """

@@ -64,5 +64,5 @@ class VideoService:
     
     def __get_videos_by_search_query(self, query: str) -> List[Video]:
         video_ids = self.search_index.find_video_ids(query)
-        db_videos = self.repository.get_videos_by_ids(video_ids)
+        db_videos = self.repository.get_videos_by_ids(video_ids, self.MAX_VIDEOS_RESULT)
         return [Video.from_db_model(db_video) for db_video in db_videos]
