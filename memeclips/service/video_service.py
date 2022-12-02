@@ -1,19 +1,20 @@
 from typing import List
 from database.repository import Repository
-from search.video_search_index import VideoSearchIndex
 from service.domain_models import Video, User, Favorite
 
 class VideoService:
 
-    MAX_VIDEOS_RESULT = 50
+    MAX_VIDEOS_RESULT = 600
 
-    def __init__(self, repository: Repository, search_index: VideoSearchIndex):
+    def __init__(self, repository: Repository):
         self.repository = repository
-        self.search_index = search_index
     
-    def search_videos(self, query: str, user: User, get_default_videos_for_user: bool) -> List[Video]:
-        if get_default_videos_for_user:
+    def search_videos(self, query: str, user: User) -> List[Video]:
+        query_length = len(query)
+        if query_length == 0:
             return self.__get_default_videos_for_user(user)
+        elif query_length == 1:
+            return self.__get_all_videos_starting_with(query)
         else:
             return self.__get_videos_by_search_query(query)
 
@@ -28,7 +29,6 @@ class VideoService:
 
         self.repository.insert_user_if_not_exist(user.to_db_model())
         self.repository.insert_video(video.to_db_model())
-        self.search_index.add_video_to_search_index(video)
 
         return 'Video guardado exitosamente.'
     
@@ -43,7 +43,7 @@ class VideoService:
         if existing_favorites >= self.MAX_VIDEOS_RESULT:
             return f'Solo se permite un maximo de {self.MAX_VIDEOS_RESULT} favoritos.'
 
-        favorite_model = Favorite(video.video_id, user.user_id).to_db_model()
+        favorite_model = Favorite(user_id=user.user_id, video_id=video.video_id).to_db_model()
         self.repository.insert_favorite(favorite_model)
 
         return 'Favorito guardado exitosamente.'
@@ -63,6 +63,10 @@ class VideoService:
         return results
     
     def __get_videos_by_search_query(self, query: str) -> List[Video]:
-        video_ids = self.search_index.find_video_ids(query)
-        db_videos = self.repository.get_videos_by_ids(video_ids, self.MAX_VIDEOS_RESULT)
+        db_videos = self.repository.get_videos_like_title(query)
+        #db_videos = self.repository.get_videos_by_ids(video_ids, 100)
+        return [Video.from_db_model(db_video) for db_video in db_videos]
+
+    def __get_all_videos_starting_with(self, query: str) -> List[Video]:
+        db_videos = self.repository.get_all_videos(self.MAX_VIDEOS_RESULT, query)
         return [Video.from_db_model(db_video) for db_video in db_videos]

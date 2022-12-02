@@ -42,18 +42,22 @@ class Repository:
 
         :param user: the user to insert
         """
-        existing_user = self.session.query(User).get(user)
+        existing_user = self.session.query(User).get(user.user_id)
         if existing_user is None:
             self.session.add(user)
             self.session.commit()
 
-    def get_all_videos(self, limit: int) -> List[Video]:
+    def get_all_videos(self, limit: int, title_start_with: str = None) -> List[Video]:
         """
         Gets all videos from the database.
 
         :return: all videos
         """
-        return self.session.query(Video).limit(limit).all()
+        query = self.session.query(Video)
+        if (title_start_with is not None):
+            query = query.filter(Video.title.startswith(title_start_with))
+        
+        return query.order_by(Video.title).limit(limit).all()
 
     def get_videos_by_ids(self, video_ids: List[str], limit: int) -> List[Video]:
         """
@@ -63,6 +67,15 @@ class Repository:
         :return: all videos
         """
         return self.session.query(Video).filter(Video.video_id.in_(video_ids)).limit(limit).all()
+    
+    def get_videos_like_title(self, title: str, limit: int = 100) -> List[Video]:
+        """
+        Gets all videos from the database that have a title like the given title.
+
+        :param title: the title
+        :return: all videos
+        """
+        return self.session.query(Video).filter(Video.title.like(f'%{title}%')).limit(limit).all()
     
     def get_video_by_id(self, video_id: str) -> Video:
         """

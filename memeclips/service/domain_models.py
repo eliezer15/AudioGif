@@ -33,10 +33,10 @@ class Video:
         video.uploaded_by = db_video.uploaded_by
         return video
     
-    def from_telegram_video(telegram_video: TelegramVideo, caption: str):
+    def from_telegram_video(telegram_video: TelegramVideo, caption: str = None):
         video = Video()
-        video.video_id = telegram_video.file_id
-        video.playable_video_id = telegram_video.file_unique_id
+        video.video_id = telegram_video.file_unique_id
+        video.playable_video_id = telegram_video.file_id
         video.title = caption
         return video
     

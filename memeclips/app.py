@@ -3,7 +3,6 @@ import logging
 from os import environ as env
 from service.telegram_service import TelegramService
 from service.video_service import VideoService
-from search.video_search_index import VideoSearchIndex
 from database.repository import Repository
 from telegram.ext import Updater, MessageHandler, Filters, InlineQueryHandler
 
@@ -32,8 +31,7 @@ def main():
 def provision_services() -> TelegramService:
     #TODO: use DI
     repository = Repository(DB_PATH)
-    search_index = VideoSearchIndex(SEARCH_PATH)
-    service = VideoService(repository, search_index)
+    service = VideoService(repository)
 
     return TelegramService(BOT_ID, TOKEN, MANAGEMENT_CHANNEL_ID, service)
 
