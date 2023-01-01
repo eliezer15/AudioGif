@@ -40,14 +40,14 @@ class TelegramService:
             return
 
         reply_text = message.text.strip().lower()
-        if reply_text not in ['favorite', 'favorito', 'f', '❤️', '⭐']:
+        if reply_text == 'f':
+            self.__handle_favorite_command(message)
+        
+        elif reply_text == 'd':
+            self.__handle_delete_command(message)
+        
+        else:
             return
-
-        video = Video.from_telegram_video(message.reply_to_message.video)
-        user = User.from_telegram_user(message.from_user)
-
-        output_message = self.video_service.save_favorite(video, user)
-        message.reply_text(output_message)
 
     def handle_bot_mention(self, update: Update, context: CallbackContext):
         query = update.inline_query.query
@@ -67,6 +67,18 @@ class TelegramService:
             is_personal=get_default_videos_for_user,
             auto_pagination=True
         )
+    
+    def __handle_favorite_command(self, message: Message):
+        video = Video.from_telegram_video(message.reply_to_message.video)
+        user = User.from_telegram_user(message.from_user)
+
+        output_message = self.video_service.save_favorite(video, user)
+        message.reply_text(output_message)
+
+    def __handle_delete_command(self, message: Message):
+        video = Video.from_telegram_video(message.reply_to_message.video)
+        output_message = self.video_service.delete_video(video)
+        message.reply_text(output_message)
 
     def __build_inline_query(self, video: Video) -> InlineQueryResultArticle:
         return InlineQueryResultCachedVideo(

@@ -26,6 +26,15 @@ class Repository:
         """
         self.session.add(video)
         self.session.commit()
+    
+    def delete_video_by_id(self, video_id: str):
+        """
+        Deletes a video from the database by its id.
+
+        :param video_id: the video id
+        """
+        self.session.query(Video).filter(Video.video_id == video_id).delete()
+        self.session.commit()
 
     def insert_favorite(self, favorite: Favorite):
         """
@@ -54,7 +63,7 @@ class Repository:
         :return: all videos
         """
         query = self.session.query(Video)
-        if (title_start_with is not None):
+        if title_start_with is not None:
             query = query.filter(Video.title.startswith(title_start_with))
         
         return query.order_by(Video.title).limit(limit).all()
@@ -67,7 +76,7 @@ class Repository:
         :return: all videos
         """
         return self.session.query(Video).filter(Video.video_id.in_(video_ids)).limit(limit).all()
-    
+
     def get_videos_like_title(self, title: str, limit: int = 100) -> List[Video]:
         """
         Gets all videos from the database that have a title like the given title.

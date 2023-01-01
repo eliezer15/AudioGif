@@ -20,5 +20,3 @@ class User(Base):
     __tablename__ = "users"
     user_id = Column(String, primary_key=True)
     username = Column(String)
-
-

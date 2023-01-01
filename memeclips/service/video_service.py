@@ -48,6 +48,14 @@ class VideoService:
 
         return 'Favorito guardado exitosamente.'
     
+    def delete_video(self, video: Video) -> str:
+        existing_video = self.repository.get_video_by_id(video.video_id)
+        if existing_video is None:
+            return 'Este video no es parte de AudioGif.'
+        
+        self.repository.delete_video_by_id(video.video_id)
+        return 'Video borrado exitosamente.'
+    
     def __get_default_videos_for_user(self, user: User) -> List[Video]:
         results = []
         favorites = self.repository.get_favorite_videos(user.user_id)
