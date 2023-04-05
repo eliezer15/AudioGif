@@ -13,6 +13,8 @@ class VideoService:
         query_length = len(query)
         if query_length == 0:
             return self.__get_default_videos_for_user(user)
+        elif query == '.':
+            return self.__get_all_videos_uploaded_by_user(user)
         elif query_length == 1:
             return self.__get_all_videos_starting_with(query)
         else:
@@ -47,6 +49,16 @@ class VideoService:
         self.repository.insert_favorite(favorite_model)
 
         return 'Favorito guardado exitosamente.'
+
+    def delete_favorite(self, video: Video, user: User) -> str:
+        existing_video = self.repository.get_video_by_id(video.video_id)
+        if existing_video is None:
+            return 'Este video no es parte de AudioGif.'
+        
+        favorite_model = Favorite(user_id=user.user_id, video_id=video.video_id).to_db_model()
+        self.repository.delete_favorite(favorite_model)
+
+        return 'Favorito borrado exitosamente'
     
     def delete_video(self, video: Video) -> str:
         existing_video = self.repository.get_video_by_id(video.video_id)
@@ -72,9 +84,12 @@ class VideoService:
     
     def __get_videos_by_search_query(self, query: str) -> List[Video]:
         db_videos = self.repository.get_videos_like_title(query)
-        #db_videos = self.repository.get_videos_by_ids(video_ids, 100)
         return [Video.from_db_model(db_video) for db_video in db_videos]
 
     def __get_all_videos_starting_with(self, query: str) -> List[Video]:
         db_videos = self.repository.get_all_videos(self.MAX_VIDEOS_RESULT, query)
+        return [Video.from_db_model(db_video) for db_video in db_videos]
+    
+    def __get_all_videos_uploaded_by_user(self, user: User) -> List[Video]:
+        db_videos = self.repository.get_videos_by_user(user)
         return [Video.from_db_model(db_video) for db_video in db_videos]

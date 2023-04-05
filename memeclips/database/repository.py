@@ -1,6 +1,6 @@
 from typing import List
 from database.db_models import Video, User, Favorite
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, desc
 from sqlalchemy.orm import sessionmaker
 
 class Repository:
@@ -44,6 +44,16 @@ class Repository:
         """
         self.session.add(favorite)
         self.session.commit()
+    
+    def delete_favorite(self, favorite: Favorite):
+        """
+        Deletes a favorite from the database
+
+        :param favorite: the favorite to delete
+        """
+
+        self.session.query(Favorite).filter(Favorite.video_id == favorite.video_id, Favorite.user_id == favorite.user_id).delete()
+        self.session.commit()
 
     def insert_user_if_not_exist(self, user: User):
         """
@@ -76,6 +86,16 @@ class Repository:
         :return: all videos
         """
         return self.session.query(Video).filter(Video.video_id.in_(video_ids)).limit(limit).all()
+
+    def get_videos_by_user(self, user: User) -> List[Video]:
+        """
+        Gets all videos from the database by user who uploaded them.
+
+        :param user: the user 
+        :return: all videos
+        """
+
+        return self.session.query(Video).filter(Video.uploaded_by == user.user_id).order_by(Video.title)
 
     def get_videos_like_title(self, title: str, limit: int = 100) -> List[Video]:
         """

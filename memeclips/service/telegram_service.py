@@ -17,7 +17,6 @@ class TelegramService:
     def handle_video_upload(self, update: Update, context: CallbackContext):
         message = update.message
         
-
         if str(message.chat_id) != self.management_channel_id:
             return
             
@@ -46,12 +45,14 @@ class TelegramService:
         elif reply_text == 'd':
             self.__handle_delete_command(message)
         
+        elif reply_text == 'uf':
+            self.__handle_delete_favorite_command(message)
         else:
             return
 
     def handle_bot_mention(self, update: Update, context: CallbackContext):
-        query = update.inline_query.query
-        get_default_videos_for_user = len(query) == 0
+        query = update.inline_query.query.strip().lower()
+
         user = User.from_telegram_user(update.inline_query.from_user)
 
         videos = self.video_service.search_videos(query, user)
@@ -64,7 +65,7 @@ class TelegramService:
 
         update.inline_query.answer(
             results=results,
-            is_personal=get_default_videos_for_user,
+            is_personal=True, # only cache per user
             auto_pagination=True
         )
     
@@ -78,6 +79,12 @@ class TelegramService:
     def __handle_delete_command(self, message: Message):
         video = Video.from_telegram_video(message.reply_to_message.video)
         output_message = self.video_service.delete_video(video)
+        message.reply_text(output_message)
+
+    def __handle_delete_favorite_command(self, message: Message):
+        video = Video.from_telegram_video(message.reply_to_message.video)
+        user = User.from_telegram_user(message.from_user)
+        output_message = self.video_service.delete_favorite(video, user)
         message.reply_text(output_message)
 
     def __build_inline_query(self, video: Video) -> InlineQueryResultArticle:
