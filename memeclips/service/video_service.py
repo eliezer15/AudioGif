@@ -5,6 +5,7 @@ from service.domain_models import Video, User, Favorite
 class VideoService:
 
     MAX_VIDEOS_RESULT = 600
+    MAX_CAPTION_LENGTH = 128
 
     def __init__(self, repository: Repository):
         self.repository = repository
@@ -26,8 +27,8 @@ class VideoService:
         if caption == '':
             return 'El video no incluye ningun caption, no sera guardado.'
 
-        elif len(caption) > 32:
-            return 'El caption tiene mas de 32 caracteres. Sube el video con un caption mas corto.'
+        elif len(caption) > self.MAX_CAPTION_LENGTH:
+            return f'El titulo tiene mas de {self.MAX_CAPTION_LENGTH} caracteres. Sube el video con un titulo mas corto.'
 
         self.repository.insert_user_if_not_exist(user.to_db_model())
         self.repository.insert_video(video.to_db_model())
@@ -68,6 +69,20 @@ class VideoService:
         self.repository.delete_video_by_id(video.video_id)
         return 'Video borrado exitosamente.'
     
+
+    def update_video_title(self, video: Video, new_title: str) -> str:
+        existing_video = self.repository.get_video_by_id(video.video_id)
+        if existing_video is None:
+            return 'Este video no es parte de AudioGif.'
+
+        if new_title == '':
+            return 'El titulo no puede estar vacio'
+        
+        if len(new_title) > self.MAX_CAPTION_LENGTH:
+            return f'El titulo tiene mas de {self.MAX_CAPTION_LENGTH} caracteres. Utiliza un titulo mas corto.'
+
+        self.repository.update_video_title(existing_video.video_id, new_title)
+    
     def __get_default_videos_for_user(self, user: User) -> List[Video]:
         results = []
         favorites = self.repository.get_favorite_videos(user.user_id)
@@ -92,4 +107,6 @@ class VideoService:
     
     def __get_all_videos_uploaded_by_user(self, user: User) -> List[Video]:
         db_videos = self.repository.get_videos_by_user(user)
-        return [Video.from_db_model(db_video) for db_video in db_videos]
+        videos = [Video.from_db_model(db_video) for db_video in db_videos]
+        videos.reverse()
+        return videos

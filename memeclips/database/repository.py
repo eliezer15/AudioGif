@@ -95,7 +95,7 @@ class Repository:
         :return: all videos
         """
 
-        return self.session.query(Video).filter(Video.uploaded_by == user.user_id).order_by(Video.title)
+        return self.session.query(Video).filter(Video.uploaded_by == user.user_id).all()
 
     def get_videos_like_title(self, title: str, limit: int = 100) -> List[Video]:
         """
@@ -132,6 +132,13 @@ class Repository:
         :return: the number of favorite videos
         """
         return self.session.query(Favorite).filter(Favorite.user_id == user_id).count()
+    
+    def update_video_title(self, video_id: str, new_title: str):
+        self.session.query(Video)\
+            .filter(Video.video_id == video_id)\
+            .update({'title': new_title})
+        
+        self.session.commit()
 
 
     
