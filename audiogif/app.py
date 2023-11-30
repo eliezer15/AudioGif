@@ -13,7 +13,6 @@ BOT_ID= env['BOT_ID']
 TOKEN = env['TOKEN']
 MANAGEMENT_CHANNEL_ID = env['MANAGEMENT_CHANNEL_ID']
 DB_PATH = env['DB_PATH']
-SEARCH_PATH = env['SEARCH_PATH']
 
 def main():
 

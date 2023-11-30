@@ -14,7 +14,7 @@ class Repository:
 
         :param db_path: path to the database file
         """
-        engine = create_engine(f'sqlite:///{db_path}', echo=True)
+        engine = create_engine(f'{db_path}', echo=True)
         Session = sessionmaker(bind=engine)
         self.session = Session()
 
