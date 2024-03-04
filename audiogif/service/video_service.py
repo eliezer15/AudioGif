@@ -82,6 +82,8 @@ class VideoService:
             return f'El titulo tiene mas de {self.MAX_CAPTION_LENGTH} caracteres. Utiliza un titulo mas corto.'
 
         self.repository.update_video_title(existing_video.video_id, new_title)
+
+        return f'Titulo actualizado. Nuevo titulo: {new_title}'
     
     def __get_default_videos_for_user(self, user: User) -> List[Video]:
         results = []

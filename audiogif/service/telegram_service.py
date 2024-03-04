@@ -47,6 +47,9 @@ class TelegramService:
         
         elif reply_text == 'uf':
             self.__handle_delete_favorite_command(message)
+
+        elif reply_text.startswith('e'):
+            self.__handle_edit_title(message, reply_text)
         else:
             return
 
@@ -85,6 +88,12 @@ class TelegramService:
         video = Video.from_telegram_video(message.reply_to_message.video)
         user = User.from_telegram_user(message.from_user)
         output_message = self.video_service.delete_favorite(video, user)
+        message.reply_text(output_message)
+    
+    def __handle_edit_title(self, message: Message, reply_text: str):
+        video = Video.from_telegram_video(message.reply_to_message.video)
+        new_title = reply_text.split(':')[1].strip()
+        output_message = self.video_service.update_video_title(video, new_title)
         message.reply_text(output_message)
 
     def __build_inline_query(self, video: Video) -> InlineQueryResultArticle:
