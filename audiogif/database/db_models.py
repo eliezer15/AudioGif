@@ -14,6 +14,7 @@ class Video(Base):
     video_id = Column(String, primary_key=True)
     playable_video_id = Column(String)
     title = Column(String)
+    search_title = Column(String)
     uploaded_by = Column(String, ForeignKey("users.user_id"))
 
 class User(Base):

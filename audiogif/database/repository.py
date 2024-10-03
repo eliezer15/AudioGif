@@ -2,6 +2,7 @@ from typing import List
 from database.db_models import Video, User, Favorite
 from sqlalchemy import create_engine, desc
 from sqlalchemy.orm import sessionmaker
+from service.utils import remove_accents_and_punctuation
 
 class Repository:
     """
@@ -104,7 +105,8 @@ class Repository:
         :param title: the title
         :return: all videos
         """
-        return self.session.query(Video).filter(Video.title.like(f'%{title}%')).limit(limit).all()
+        search_title = remove_accents_and_punctuation(title)
+        return self.session.query(Video).filter(Video.search_title.like(f'%{search_title}%')).limit(limit).all()
     
     def get_video_by_id(self, video_id: str) -> Video:
         """
@@ -136,7 +138,7 @@ class Repository:
     def update_video_title(self, video_id: str, new_title: str):
         self.session.query(Video)\
             .filter(Video.video_id == video_id)\
-            .update({'title': new_title})
+            .update({'title': new_title, 'search_title': remove_accents_and_punctuation(new_title)})
         
         self.session.commit()
 

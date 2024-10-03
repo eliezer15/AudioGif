@@ -1,5 +1,6 @@
 from database import db_models as db
 from telegram import Video as TelegramVideo, User as TelegramUser
+from service.utils import remove_accents_and_punctuation
 
 """
 These classes are the core business entities and represent the bridge between
@@ -22,6 +23,7 @@ class Video:
         db_video.video_id = self.video_id
         db_video.playable_video_id = self.playable_video_id
         db_video.title = self.title
+        db_video.search_title = remove_accents_and_punctuation(self.title)
         db_video.uploaded_by = self.uploaded_by
         return db_video
     
@@ -30,6 +32,7 @@ class Video:
         video.video_id = db_video.video_id
         video.playable_video_id = db_video.playable_video_id
         video.title = db_video.title
+        
         video.uploaded_by = db_video.uploaded_by
         return video
     
